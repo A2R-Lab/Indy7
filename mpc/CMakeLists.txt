@@ -18,14 +18,13 @@ ament_target_dependencies(robot_driver rclcpp std_msgs)
 add_executable(trajectory_publisher src/trajectory_publisher.cpp)
 ament_target_dependencies(trajectory_publisher rclcpp std_msgs)
 
-add_executable(trajopt src/trajopt.cpp)
-target_include_directories(trajopt PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_features(trajopt PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+# add_executable(trajopt src/trajopt.cpp)
+# target_include_directories(trajopt PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+# target_compile_features(trajopt PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
 install(TARGETS 
-  trajopt
   robot_driver
   trajectory_publisher
   DESTINATION lib/${PROJECT_NAME})

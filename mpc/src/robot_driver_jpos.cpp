@@ -41,7 +41,11 @@ public:
     }
 
 private:
-
+    /**
+     * @brief Callback function for the joint position trajectory, updates instance variable trajectory_ whenever a new trajectory is received.
+     * 
+     * @param msg Joint position trajectory message
+     */
     void trajectoryCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
     {
         std::lock_guard<std::mutex> lock(trajectory_mutex_);
@@ -53,9 +57,13 @@ private:
         }
         trajectory_start_time_ = msg->data.back();
     
-        RCLCPP_INFO(this->get_logger(), "<trajectory_callback()>: Received trajectory. Knot points: %d, Start time: %f", static_cast<int>(trajectory_.size()), trajectory_start_time_);
+        RCLCPP_INFO(this->get_logger(), "<trajectory_callback()>: Received trajectory. Knot points = %d, t_0 = %f", static_cast<int>(trajectory_.size()), trajectory_start_time_);
     }
 
+    /**
+     * @brief Timer callback function for robot control and state publishing.
+     * Robot is commanded to move to certain points in the trajectory based on the elapsed time.
+     */
     void timerCallback()
     {
         auto state_msg = std_msgs::msg::Float64MultiArray();
@@ -65,25 +73,20 @@ private:
 
         double current_time = this->now().seconds();
         state_msg.data.push_back(current_time);
-        state_publisher_->publish(std::move(state_msg));
+        state_publisher_->publish(std::move(state_msg)); //publish current state and time
 
-        // RCLCPP_INFO(this->get_logger(), "Current state and time: [%f, %f, %f, %f, %f, %f, %f]",
-        //     state_msg.data[0], state_msg.data[1], state_msg.data[2],
-        //     state_msg.data[3], state_msg.data[4], state_msg.data[5],
-        //     state_msg.data[6]);
-
+        // Move to trajectory point based on elapsed time
         std::lock_guard<std::mutex> lock(trajectory_mutex_);
         if (!trajectory_.empty()) {
-            double elapsed_time = this->now().seconds() - trajectory_start_time_;
+            double elapsed_time = current_time - trajectory_start_time_;
             int index = static_cast<int>(elapsed_time / timestep_);
             if (index < knot_points_ && index < static_cast<int>(trajectory_.size())) {
+                RCLCPP_INFO(this->get_logger(), "<timerCallback()>: Moving to point %d: [%f, %f, %f, %f, %f, %f], elapsed time = %f, current time = %f",
+                    index, trajectory_[index][0], trajectory_[index][1], trajectory_[index][2], trajectory_[index][3], trajectory_[index][4], trajectory_[index][5], elapsed_time, current_time);
                 //TODO: move to trajectory point
-
-                RCLCPP_INFO(this->get_logger(), "Moving to trajectory point %d: [%f, %f, %f, %f, %f, %f]", 
-                    index, trajectory_[index][0], trajectory_[index][1], trajectory_[index][2], trajectory_[index][3], trajectory_[index][4], trajectory_[index][5]);
-                
             } else {
-                RCLCPP_INFO(this->get_logger(), "Trajectory completed");
+                //TODO: move to last point
+                RCLCPP_INFO(this->get_logger(), "<timerCallback()>: Trajectory completed");
                 trajectory_.clear();
             }
         }
@@ -106,7 +109,7 @@ private:
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<RobotDriver>(KNOT_POINTS, 0.125); //TODO: edit timestep, pass robot_ip
+    auto node = std::make_shared<RobotDriver>(KNOT_POINTS, TIMESTEP); //TODO: edit timestep, pass robot_ip
     rclcpp::spin(node);
     rclcpp::shutdown();
 

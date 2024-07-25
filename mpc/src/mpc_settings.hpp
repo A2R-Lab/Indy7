@@ -2,7 +2,7 @@
 #define KNOT_POINTS 32 
 #endif
 
-#ifndef TIMESTEP //timestep between knot points
+#ifndef TIMESTEP //timestep between knot points (seconds)
 #define TIMESTEP 0.125
 #endif
 
