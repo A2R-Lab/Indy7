@@ -1,0 +1,6 @@
+*.exe
+*.o
+
+mpc/build/
+mpc/install/
+mpc/log/

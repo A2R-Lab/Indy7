@@ -10,6 +10,7 @@
 #include <mutex>
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
+#include "mpc_settings.hpp"
 //TODO: import indySDK
 
 /**
@@ -26,12 +27,13 @@ public:
     RobotDriver(int knot_points, double timestep)
     : Node("robot_driver"), knot_points_(knot_points), timestep_(timestep)
     {
-        state_publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("curr_state_and_time", 10);
         traj_subscription_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-            "joint_pos_traj", 1, std::bind(&RobotDriver::trajectory_callback, this, std::placeholders::_1));
-
+            "joint_pos_traj", 1, std::bind(&RobotDriver::trajectoryCallback, this, std::placeholders::_1));
+        
+        state_publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("curr_state_and_time", 10);
+        RCLCPP_INFO(this->get_logger(), "Starting robot control and state publishing at %f hz", 1000.0 / ROBOT_CONTROL_PERIOD_MS);
         timer_ = this->create_wall_timer( // frequency of robot control
-            std::chrono::milliseconds(10), std::bind(&RobotDriver::timer_callback, this));
+            std::chrono::milliseconds(ROBOT_CONTROL_PERIOD_MS), std::bind(&RobotDriver::timerCallback, this));
 
         //TODO: initialize indySDK
         //indy_ = std::make_unique<IndyDCP3>(robot_ip);
@@ -40,20 +42,21 @@ public:
 
 private:
 
-    void trajectory_callback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
+    void trajectoryCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
     {
         std::lock_guard<std::mutex> lock(trajectory_mutex_);
         trajectory_.clear();
-        for (size_t i = 0; i + 5 < msg->data.size(); i += 6) {
+        //msg->data is state_size * knot_points + 1 = = 6 * 32 + 1 = 193
+        for (size_t i = 0; i + 5 < msg->data.size(); i += 6) { 
             std::vector<double> point(msg->data.begin() + i, msg->data.begin() + i + 6);
             trajectory_.push_back(point);
         }
-        
         trajectory_start_time_ = msg->data.back();
-        RCLCPP_INFO(this->get_logger(), "Received trajectory, trajectory_start_time: %f", trajectory_start_time_);
+    
+        RCLCPP_INFO(this->get_logger(), "<trajectory_callback()>: Received trajectory. Knot points: %d, Start time: %f", static_cast<int>(trajectory_.size()), trajectory_start_time_);
     }
 
-    void timer_callback()
+    void timerCallback()
     {
         auto state_msg = std_msgs::msg::Float64MultiArray();
         
@@ -75,12 +78,10 @@ private:
             int index = static_cast<int>(elapsed_time / timestep_);
             if (index < knot_points_ && index < static_cast<int>(trajectory_.size())) {
                 //TODO: move to trajectory point
-                std::cout << "Moving to trajectory point " << index;
-                std::cout << "  [";
-                for (size_t i = 0; i < trajectory_[index].size(); ++i) {
-                    std::cout << trajectory_[index][i] << " ";
-                }
-                std::cout << "]" << std::endl;
+
+                RCLCPP_INFO(this->get_logger(), "Moving to trajectory point %d: [%f, %f, %f, %f, %f, %f]", 
+                    index, trajectory_[index][0], trajectory_[index][1], trajectory_[index][2], trajectory_[index][3], trajectory_[index][4], trajectory_[index][5]);
+                
             } else {
                 RCLCPP_INFO(this->get_logger(), "Trajectory completed");
                 trajectory_.clear();
@@ -105,7 +106,7 @@ private:
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<RobotDriver>(32, 0.125); //TODO: edit timestep, pass robot_ip
+    auto node = std::make_shared<RobotDriver>(KNOT_POINTS, 0.125); //TODO: edit timestep, pass robot_ip
     rclcpp::spin(node);
     rclcpp::shutdown();
 
