@@ -1,4 +1,4 @@
-#Usage Guide
+# Usage Guide
 
 This package requires Ros2 Humble Hawksbill 
 
@@ -9,7 +9,7 @@ cd Indy7/mpc
 source /opt/ros/humble/setup.bash
 ```
 
-You can change parameters in mpc_settings.hpp
+You can change parameters in mpc_settings.hpp 
 
 Build:
 ```bash
