@@ -2,14 +2,20 @@
 
 This package requires Ros2 Humble Hawksbill 
 
+## Building
+
+```bash
+git clone https://github.com/A2R-Lab/Indy7.git
+cd Indy7/mpc
+git submodule update --init --recursive
+```
 
 Set up your environment:
 ```bash
-cd Indy7/mpc
 source /opt/ros/humble/setup.bash
 ```
 
-You can change parameters in mpc_settings.hpp 
+You can change parameters in mpc_settings.hpp and MPCGPU/include/common/settings.cuh
 
 Build:
 ```bash
@@ -26,13 +32,13 @@ Run robot_driver:
 ros2 run mpc robot_driver
 ```
 
-Then run trajectory_publisher:
-```bash
-ros2 run mpc trajectory_publisher
-```
-
-or trajopt_node:
+Then run trajopt_node:
 ```bash
 ros2 run mpc trajopt_node
+```
+
+or trajectory_publisher:
+```bash
+ros2 run mpc trajectory_publisher
 ```
 
