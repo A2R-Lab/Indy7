@@ -1,0 +1,3 @@
+[submodule "mpc/MPCGPU"]
+	path = mpc/MPCGPU
+	url = git@github.com:A2R-Lab/MPCGPU.git
