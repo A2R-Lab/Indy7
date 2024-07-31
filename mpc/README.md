@@ -31,4 +31,8 @@ Then run trajectory_publisher:
 ros2 run mpc trajectory_publisher
 ```
 
+or trajopt_node:
+```bash
+ros2 run mpc trajopt_node
+```
 

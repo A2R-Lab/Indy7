@@ -31,9 +31,12 @@ public:
             "joint_pos_traj", 1, std::bind(&RobotDriver::trajectoryCallback, this, std::placeholders::_1));
         
         state_publisher_ = this->create_publisher<std_msgs::msg::Float64MultiArray>("curr_state_and_time", 10);
+
+
         RCLCPP_INFO(this->get_logger(), "Starting robot control and state publishing at %f hz", 1000.0 / ROBOT_CONTROL_PERIOD_MS);
-        timer_ = this->create_wall_timer( // frequency of robot control
-            std::chrono::milliseconds(ROBOT_CONTROL_PERIOD_MS), std::bind(&RobotDriver::timerCallback, this));
+        
+        //timer for robot control and state publishing
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(ROBOT_CONTROL_PERIOD_MS), std::bind(&RobotDriver::timerCallback, this));
 
         //TODO: initialize indySDK
         //indy_ = std::make_unique<IndyDCP3>(robot_ip);
@@ -69,7 +72,19 @@ private:
         auto state_msg = std_msgs::msg::Float64MultiArray();
         
         //TODO: get control data from indy7 or sim instead
-        state_msg.data = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
+
+        //if empty or nan
+        if (trajectory_.empty() || std::isnan(trajectory_[0][0]))
+        {
+            state_msg.data = {0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001};       
+        }
+        else
+        {
+            state_msg.data = {trajectory_[1][0], trajectory_[1][1], trajectory_[1][2], trajectory_[1][3], trajectory_[1][4], trajectory_[1][5]};
+        }
+
+ 
+        
 
         double current_time = this->now().seconds();
         state_msg.data.push_back(current_time);

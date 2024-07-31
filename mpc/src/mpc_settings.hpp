@@ -3,7 +3,15 @@
 #endif
 
 #ifndef TIMESTEP //timestep between knot points (seconds)
-#define TIMESTEP 0.125
+#define TIMESTEP 0.0625
+#endif
+
+#ifndef STATE_SIZE
+#define STATE_SIZE 12
+#endif
+
+#ifndef CONTROL_SIZE
+#define CONTROL_SIZE 6
 #endif
 
 // ---------------------- trajectory_publisher.cpp ----------------------
@@ -16,5 +24,5 @@
 // ---------------------- robot_driver_jpos.cpp ----------------------
 
 #ifndef ROBOT_CONTROL_PERIOD_MS // Wait time for sending controls and reading state (robot_driver_jpos.cpp)
-#define ROBOT_CONTROL_PERIOD_MS 200
+#define ROBOT_CONTROL_PERIOD_MS 20
 #endif
