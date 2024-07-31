@@ -27,6 +27,8 @@ Source the install directory
 source install/setup.bash
 ```
 
+## Running nodes
+
 Run robot_driver:
 ```bash
 ros2 run mpc robot_driver
